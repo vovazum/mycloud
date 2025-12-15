@@ -1,2 +1,18 @@
-/.env
-/venv
+# Django
+file_storage/.env
+file_storage/db.sqlite3
+file_storage/staticfiles/
+file_storage/media/
+file_storage/venv/
+__pycache__/
+
+# React
+frontend/node_modules/
+frontend/build/
+
+# IDE
+.vscode/
+.idea/
+
+# System
+.DS_Store

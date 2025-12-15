@@ -1,4 +1,4 @@
-from venv import logger
+import logging
 from django.views.decorators.csrf import ensure_csrf_cookie, csrf_exempt
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, IsAdminUser, AllowAny
@@ -31,7 +31,52 @@ from django.utils import timezone
 
 logger = logging.getLogger(__name__)
 
-
+from django.http import HttpResponse
+from django.conf import settings
+import os
+from django.http import HttpResponse, Http404
+def react_app_view(request):
+    """View для обслуживания React приложения"""
+    
+    # Исключаем API, админку, статику и медиа
+    if (request.path.startswith('/api/') or 
+        request.path.startswith('/admin/') or 
+        request.path.startswith('/static/') or
+        request.path.startswith('/media/')):
+        raise Http404()
+    
+    # Пытаемся отдать index.html React
+    try:
+        # Правильный путь к React файлам
+        react_index_path = os.path.join(settings.BASE_DIR, 'static', 'react', 'index.html')
+        with open(react_index_path, 'r', encoding='utf-8') as file:
+            return HttpResponse(file.read())
+    except FileNotFoundError:
+        # Если файл не найден, показываем информационную страницу
+        return HttpResponse("""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>CloudVault - Setup Required</title>
+            <style>
+                body { font-family: Arial, sans-serif; margin: 40px; }
+                h1 { color: #d32f2f; }
+                code { background: #f5f5f5; padding: 10px; display: block; }
+            </style>
+        </head>
+        <body>
+            <h1>⚠️ React Build Not Found</h1>
+            <p>Please build your React app and copy files to:</p>
+            <code>file_storage/static/react/</code>
+            <p>Steps:</p>
+            <ol>
+                <li>cd frontend</li>
+                <li>npm run build</li>
+                <li>Copy all files from build/ to file_storage/static/react/</li>
+            </ol>
+        </body>
+        </html>
+        """, status=503)
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
