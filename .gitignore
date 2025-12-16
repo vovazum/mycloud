@@ -4,57 +4,25 @@ venv/
 __pycache__/
 .env
 db.sqlite3
-*.sqlite3
-*.sqlite3-journal
 
 # Node
 node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
 
 # React
 /build/
-.eslintcache
 
 # Docker
 .dockerignore
 *.dockerfile
-docker-compose.override.yml
 
-# Volumes and local data
+# Volumes
 postgres_data/
 media_volume/
 static_volume/
-*.backup
-backups/
-logs/
 
 # IDE
 .vscode/
 .idea/
-*.swp
-*.swo
 
 # OS
 .DS_Store
-Thumbs.db
-
-# Deploy scripts
-deploy.sh
-setup_server.sh
-
-# Environment files
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-
-# Django
-*.log
-local_settings.py
-
-# Database migrations (опционально, но осторожно)
-# !file_storage/migrations/
-# file_storage/migrations/*_initial.py
-# file_storage/migrations/__pycache__/

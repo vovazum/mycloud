@@ -5,42 +5,39 @@ services:
     image: postgres:15-alpine
     container_name: mycloud_postgres
     restart: unless-stopped
-    env_file:
-      - .env
     environment:
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: mycloud_user
+      POSTGRES_PASSWORD: MyCloud2025
+      POSTGRES_DB: mycloud_db
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./backups:/backups
     ports:
       - "5432:5432"
     networks:
       - mycloud_network
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
 
   backend:
     build:
-      context: ./file_storage
-      dockerfile: ../docker/backend/Dockerfile
+      context: .
+      dockerfile: docker/backend/Dockerfile
     container_name: mycloud_backend
     restart: unless-stopped
     depends_on:
-      postgres:
-        condition: service_healthy
-    env_file:
-      - .env
+      - postgres
     environment:
-      DJANGO_SETTINGS_MODULE: file_storage.settings.production
+      DJANGO_SETTINGS_MODULE: file_storage.settings
+      SECRET_KEY: ${SECRET_KEY}
+      DEBUG: ${DEBUG}
+      ALLOWED_HOSTS: ${ALLOWED_HOSTS}
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
     volumes:
+      - ./file_storage:/app
       - static_volume:/app/staticfiles
       - media_volume:/app/media
-      - ./logs/backend:/app/logs
     ports:
       - "8000:8000"
     networks:
@@ -49,39 +46,8 @@ services:
       sh -c "
       python manage.py migrate &&
       python manage.py collectstatic --noinput &&
-      gunicorn file_storage.wsgi:application --bind 0.0.0.0:8000 --workers 3 --access-logfile -
+      gunicorn file_storage.wsgi:application --bind 0.0.0.0:8000
       "
-
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: ../docker/frontend/Dockerfile
-      args:
-        REACT_APP_API_URL: ${REACT_APP_API_URL}
-        REACT_APP_BACKEND_URL: ${REACT_APP_BACKEND_URL}
-    container_name: mycloud_frontend
-    restart: unless-stopped
-    depends_on:
-      - backend
-    networks:
-      - mycloud_network
-
-  nginx:
-    image: nginx:alpine
-    container_name: mycloud_nginx
-    restart: unless-stopped
-    depends_on:
-      - backend
-      - frontend
-    volumes:
-      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
-      - static_volume:/static
-      - media_volume:/media
-    ports:
-      - "80:80"
-      - "443:443"
-    networks:
-      - mycloud_network
 
 networks:
   mycloud_network:
