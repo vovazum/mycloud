@@ -1,3 +1,4 @@
+#file_storage/file_storage/settings.py
 import os
 from pathlib import Path
 from dotenv import load_dotenv

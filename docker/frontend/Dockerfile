@@ -1,4 +1,4 @@
-# Этап сборки
+#docker/frontend/Dockerfile
 FROM node:18-alpine as build
 
 # Аргументы сборки

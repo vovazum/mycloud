@@ -1,21 +1,27 @@
+#docker-compose.yml
 version: '3.8'
 
 services:
+  # PostgreSQL
   postgres:
     image: postgres:15-alpine
     container_name: mycloud_postgres
     restart: unless-stopped
     environment:
-      POSTGRES_USER: mycloud_user
-      POSTGRES_PASSWORD: MyCloud2025
-      POSTGRES_DB: mycloud_db
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
     networks:
       - mycloud_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
+  # Django Backend
   backend:
     build:
       context: .
@@ -23,31 +29,67 @@ services:
     container_name: mycloud_backend
     restart: unless-stopped
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
     environment:
-      DJANGO_SETTINGS_MODULE: file_storage.settings
-      SECRET_KEY: ${SECRET_KEY}
-      DEBUG: ${DEBUG}
-      ALLOWED_HOSTS: ${ALLOWED_HOSTS}
-      DB_NAME: ${DB_NAME}
-      DB_USER: ${DB_USER}
-      DB_PASSWORD: ${DB_PASSWORD}
-      DB_HOST: ${DB_HOST}
-      DB_PORT: ${DB_PORT}
+      - DJANGO_SETTINGS_MODULE=${DJANGO_SETTINGS_MODULE}
+      - SECRET_KEY=${SECRET_KEY}
+      - DEBUG=${DEBUG}
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS}
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_HOST=postgres  # Важно: имя сервиса
+      - DB_PORT=5432
     volumes:
-      - ./file_storage:/app
       - static_volume:/app/staticfiles
       - media_volume:/app/media
-    ports:
-      - "8000:8000"
+    expose:
+      - "8000"
     networks:
       - mycloud_network
     command: >
       sh -c "
+      python manage.py wait_for_db &&
       python manage.py migrate &&
       python manage.py collectstatic --noinput &&
-      gunicorn file_storage.wsgi:application --bind 0.0.0.0:8000
+      gunicorn file_storage.wsgi:application --bind 0.0.0.0:8000 --workers=3
       "
+
+  # React Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: ../docker/frontend/Dockerfile
+      args:
+        REACT_APP_API_URL: ${REACT_APP_API_URL}
+        REACT_APP_BACKEND_URL: ${REACT_APP_BACKEND_URL}
+    container_name: mycloud_frontend
+    restart: unless-stopped
+    networks:
+      - mycloud_network
+    expose:
+      - "3000"
+    depends_on:
+      - backend
+
+  # Nginx Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    container_name: mycloud_nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - static_volume:/static
+      - media_volume:/media
+    depends_on:
+      - backend
+      - frontend
+    networks:
+      - mycloud_network
 
 networks:
   mycloud_network:
