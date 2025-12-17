@@ -26,3 +26,7 @@ static_volume/
 
 # OS
 .DS_Store
+
+
+.env*
+!.env.example
