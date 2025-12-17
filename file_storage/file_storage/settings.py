@@ -1,4 +1,4 @@
-#file_storage/file_storage/settings.py
+#file_storage/file_storage/settings.py (Локально)
 import os
 from pathlib import Path
 from dotenv import load_dotenv
@@ -177,3 +177,5 @@ LOGGING = {
 
 # Дополнительные настройки
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+

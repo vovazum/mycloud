@@ -1,3 +1,4 @@
+//frontend/src/components/UserProfile/UserProfile.js
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import {
@@ -51,7 +52,7 @@ const UserProfile = () => {
   useEffect(() => {
     fetchUserProfile();
   }, []);
-
+frontend/build
   const fetchUserProfile = async () => {
     try {
       const response = await axios.get(

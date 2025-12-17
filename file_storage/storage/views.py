@@ -1,3 +1,5 @@
+#file_storage/storage/views.py
+
 import logging
 from django.views.decorators.csrf import ensure_csrf_cookie, csrf_exempt
 from rest_framework.decorators import api_view, permission_classes

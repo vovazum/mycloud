@@ -1,3 +1,4 @@
+#file_storage/storage/middleware.py
 class CorsMiddleware:
     def __init__(self, get_response):
         self.get_response = get_response
@@ -18,4 +19,4 @@ class CorsMiddleware:
             response['Access-Control-Allow-Headers'] = 'Content-Type, X-CSRFToken'
             response['Access-Control-Allow-Methods'] = 'GET, POST, PUT, PATCH, DELETE, OPTIONS'
         
-        return response
+        return response 
